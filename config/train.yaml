@@ -1,0 +1,25 @@
+experiment:
+  name: initial test
+  tracking_uri: http://localhost:5000
+
+data:
+  root: raw_data/chen_trajectories
+  train_val_subdir: train_val
+  test_subdir: test
+  input_length: 500   # q=10, seq_len=500 points --> seq = 5 seconds for T=500 seconds, T=500000 points
+  target_length: 500
+  step: 1
+  decimation: 10
+  val_ratio: 0.2
+  seed: 42
+
+model:
+  state_dim: 4
+  hidden_sizes: [128, 128]
+  lr: 1e-5
+
+training:
+  batch_size: 1024
+  max_epochs: 5
+  num_workers: 8
+  shuffle: true

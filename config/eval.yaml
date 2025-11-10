@@ -1,0 +1,19 @@
+experiment:
+  name: initial test eval
+
+data:
+  root: raw_data/chen_trajectories
+  test_subdir: test
+  input_length: 500
+  target_length: 500
+  step: 1
+  decimation: 10
+
+decimation: 10
+
+model:
+  checkpoint_path: artifacts/final_model.ckpt
+
+output:
+  metrics_path: artifacts/eval/metrics.json
+  forecast_dir: artifacts/eval/forecasts

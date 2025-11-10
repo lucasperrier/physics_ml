@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Environments and secrets
+.venv/
+.env
+.env.*
+
+# OS / editors
+.DS_Store
+.vscode/
+*.swp
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Caches / logs
+.cache/
+logs/
+
+# ML outputs
+artifacts/
+mlruns/
+lightning_logs/
+checkpoints/
+
+# Model binaries and large tensors
+*.pt
+*.ckpt
+
+# Data (keep only readme/instructions)
+data/
+!data/README.md
+
+# Parquet shards (large)
+*.parquet
