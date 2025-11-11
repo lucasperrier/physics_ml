@@ -1,8 +1,8 @@
 experiment:
   name: MLP_windows_basic_025
   tracking_uri: http://localhost:5000
-  run_dir_pattern: "{name}-{timestamp}-{uuid}"
-
+  run_subdir: MLP_windows_basic_025_run01
+  
 data:
   root: raw_data/chen_gammaz_0.25_trajectories
   train_val_subdir: train_val
