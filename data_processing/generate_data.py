@@ -312,16 +312,17 @@ if __name__ == "__main__":
     dt = 1e-3
     t0, t1 = 0.0, 500.0
     state_low, state_high = 2.0, 2.0
+    gamma_z_limit = 0.25
     param_ranges = {
         "GAMMA_d": (2.0, 2.0),
-        "gamma_z": (0.1, 1.0),
+        "gamma_z": (0.1, gamma_z_limit),
         "delta": (2.0, 2.0),
     }
 
     rng_seed = None
     rng = np.random.default_rng(rng_seed)
 
-    N = 1
+    N = 100
     trajectories = []
     for _ in range(N):
         params = {
@@ -350,7 +351,7 @@ if __name__ == "__main__":
     out_dir = Path(__file__).parent / "data"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    dataset_dir = out_dir / f"{system}_trajectories"
+    dataset_dir = out_dir / f"{system}_gammaz_{gamma_z_limit}_trajectories"
     append_trajectories_dataset(dataset_dir, trajectories)
     print(f"Appended {len(trajectories)} trajectories to {dataset_dir}")
 

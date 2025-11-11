@@ -2,17 +2,19 @@ experiment:
   name: initial test eval
 
 data:
-  root: raw_data/chen_trajectories
+  root: raw_data/chen_gammaz_0.25_trajectories
   test_subdir: test
-  input_length: 2000
-  target_length: 250
+  input_length: 500
+  target_length: 500
   step: 1
   decimation: 10
 
 decimation: 10
 
 model:
-  checkpoint_path: artifacts/MLP_windows_basic-20251111-081848-6acd350d/checkpoints/epochepoch=01-val_lossval_loss=0.4010.ckpt
+  checkpoint_path: artifacts/MLP_windows_basic_025-20251111-113903-2f27d30a/checkpoints/epochepoch=02-val_lossval_loss=0.3550.ckpt
+
+
 output:
   metrics_path: artifacts/eval/metrics.json
   forecast_dir: artifacts/eval/forecasts
