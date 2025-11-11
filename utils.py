@@ -1,5 +1,6 @@
 
 from email.headerregistry import DateHeader
+import importlib
 import os
 from pathlib import Path
 from typing import Dict, List
@@ -11,7 +12,6 @@ import yaml
 import argparse
 import pytorch_lightning as pl
 import matplotlib.pyplot as plt
-
 
 from data_processing.datasets import TrajectoryWindowDataset
 from data_processing.generate_data import read_trajectories_parquet_as_dicts, as_torch as sample_to_torch
@@ -128,31 +128,46 @@ def preprocess_full_sequence(sample: Dict, data_cfg: Dict) -> torch.Tensor:
     return seq_time_states.transpose(0, 1).contiguous()
 
 def forecast_full_trajectory(model: WindowMLP, sample: Dict, data_cfg: Dict) -> dict:
-    """
-    Produce full-horizon forecast on one preprocessed (decimated) trajectory.
-    """
-    input_len = int(data_cfg["input_length"])
-    target_len = int(data_cfg["target_length"])
+    # Prefer checkpoint hyperparams to avoid mismatches across models
+    def _hp(name: str, fallback):
+        try:
+            return int(model.hparams[name])
+        except Exception:
+            return int(getattr(model.hparams, name, fallback))
+
+    input_len = _hp("input_len", int(data_cfg["input_length"]))
+    target_len = _hp("target_len", int(data_cfg["target_length"]))
+
     full_seq = preprocess_full_sequence(sample, data_cfg)  # [S, T_dec]
-    T_dec = full_seq.size(1)
+    S, T_dec = int(full_seq.size(0)), int(full_seq.size(1))
     horizon = T_dec - input_len
     if horizon <= 0:
-        return {"run_id": sample.get("run_id"), "rmse": float("nan"), "forecast": None}
+        return {"run_id": sample.get("run_id"), "rmse": float("nan"), "forecast": None, "target": None}
+
     seed = full_seq[:, :input_len]
     with torch.no_grad():
-        full_generated, forecast_tail = model.autoregressive_forecast(
+        _, forecast_tail = model.autoregressive_forecast(
             seed,
             forecast_horizon=horizon,
             input_len=input_len,
             target_len=target_len,
-            device=model.device,
+            device=next(model.parameters()).device,
         )
-    # Ground truth tail (same decimated grid)
-    target_tail = full_seq[:, input_len:]
-    rmse = torch.sqrt(torch.mean((forecast_tail - target_tail) ** 2)).item()
+    target_tail = full_seq[:, input_len : input_len + forecast_tail.size(1)]
+    rmse = float(torch.sqrt(torch.mean((forecast_tail - target_tail) ** 2)).cpu().item())
     return {
         "run_id": sample.get("run_id"),
         "rmse": rmse,
         "forecast": forecast_tail.cpu(),
         "target": target_tail.cpu(),
     }
+
+def _build_model(model_cfg: Dict, data_cfg: Dict) -> pl.LightningModule:
+    class_path = model_cfg["class"]
+    module_name, _, cls_name = class_path.rpartition(".")
+    cls = getattr(importlib.import_module(module_name), cls_name)
+
+    params = dict(model_cfg.get("params", {}))
+    params.setdefault("input_len", data_cfg["input_length"])
+    params.setdefault("target_len", data_cfg["target_length"])
+    return cls(**params)

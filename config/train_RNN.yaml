@@ -1,13 +1,13 @@
 experiment:
-  name: MLP_windows_basic_025
+  name: RNN_windows_025
   tracking_uri: http://localhost:5000
-  run_subdir: MLP_windows_basic_025_run01
+  run_subdir: RNN_windows_025_run01
 
 data:
   root: raw_data/chen_gammaz_0.25_trajectories
   train_val_subdir: train_val
   test_subdir: test
-  input_length: 2500   # q=10, seq_len=500 points --> seq = 5 seconds for T=500 seconds, T=50000 points
+  input_length: 500   # q=10, seq_len=500 points --> seq = 5 seconds for T=500 seconds, T=50000 points
   target_length: 500
   step: 1
   decimation: 10
@@ -15,9 +15,12 @@ data:
   seed: 42
 
 model:
-  state_dim: 4
-  hidden_sizes: [128, 128]
-  lr: 1e-5
+  class: models.AutoencoderRNN.AutoencoderRNN
+  params:
+    state_dim: 4
+    hidden_dim: 128
+    num_layers: 2
+    lr: 1e-5
 
 training:
   batch_size: 512

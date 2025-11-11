@@ -18,7 +18,7 @@ from scipy.signal import decimate
 from data_processing.datasets import TrajectoryWindowDataset
 from data_processing.generate_data import read_trajectories_parquet_as_dicts, as_torch as sample_to_torch
 from models.MLP import WindowMLP
-from utils import build_loader, forecast_full_trajectory, load_data, plot_test_series_prediction, split_train_val
+from utils import _build_model, build_loader, forecast_full_trajectory, load_data, plot_test_series_prediction, split_train_val
 
 def eval_from_config(config: Dict) -> Dict:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -26,7 +26,7 @@ def eval_from_config(config: Dict) -> Dict:
     test_dir = root / config["data"]["test_subdir"]
     test_series = load_data(test_dir)  # raw dict samples
 
-    model = WindowMLP.load_from_checkpoint(config["model"]["checkpoint_path"])
+    model = pl.LightningModule.load_from_checkpoint(config["model"]["checkpoint_path"])  # Generic load
     model.to(device)
     model.eval()
 
@@ -120,13 +120,15 @@ def train_from_config(config):
     )
 
     # Model
-    model = WindowMLP(
-        state_dim=config["model"]["state_dim"],
-        input_len=config["data"]["input_length"],
-        target_len=config["data"]["target_length"],
-        hidden_sizes=tuple(config["model"]["hidden_sizes"]),
-        lr=config["model"]["lr"],
-    )
+    # model = WindowMLP(
+    #     state_dim=config["model"]["state_dim"],
+    #     input_len=config["data"]["input_length"],
+    #     target_len=config["data"]["target_length"],
+    #     hidden_sizes=tuple(config["model"]["hidden_sizes"]),
+    #     lr=config["model"]["lr"],
+    # )
+
+    model = _build_model(config["model"], config["data"])
 
     checkpoint_cb = ModelCheckpoint(
         dirpath=run_dir / "checkpoints",
@@ -141,7 +143,7 @@ def train_from_config(config):
         tracking_uri=config["experiment"]["tracking_uri"],
         run_name=run_subdir,
     )
-    
+
     # Also log non-model data/training params
     mlflow_logger.log_hyperparams({
         **dict(model.hparams),  # from save_hyperparameters
@@ -172,10 +174,10 @@ def train_from_config(config):
 
 if __name__ == "__main__":
 
-    # with open("config/train.yaml", "r") as fh:
-    #     cfg = yaml.safe_load(fh)
-    # train_from_config(cfg)
-
-    with open("config/eval.yaml", "r") as fh:
+    with open("config/train_RNN.yaml", "r") as fh:
         cfg = yaml.safe_load(fh)
-    eval_from_config(cfg)
+    train_from_config(cfg)
+
+    # with open("config/eval.yaml", "r") as fh:
+    #     cfg = yaml.safe_load(fh)
+    # eval_from_config(cfg)
